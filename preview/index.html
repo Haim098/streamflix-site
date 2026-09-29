@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-platform="other">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StreamFlix · לאנדרואיד ול-Windows</title>
+<meta name="description" content="StreamFlix לאנדרואיד ול-Windows: ממשק בעברית, צפייה בלי אינטרנט, וסנכרון בין הטלפון למחשב.">
+<meta name="theme-color" content="#08080a">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="StreamFlix">
+<meta property="og:title" content="StreamFlix · לטלפון ולמחשב">
+<meta property="og:description" content="ממשק בעברית, צפייה בלי אינטרנט, וסנכרון בין הטלפון למחשב.">
+<meta property="og:url" content="https://haim098.github.io/streamflix-site/">
+<meta property="og:image" content="https://haim098.github.io/streamflix-site/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="StreamFlix במחשב ובטלפון">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://haim098.github.io/streamflix-site/assets/og.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&display=swap">
+<link rel="preconnect" href="https://api.github.com" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+<script>
+  (function () {
+    var ua = navigator.userAgent || "", p = "other";
+    if (/Android/i.test(ua)) p = "android";
+    else if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) p = "ios";
+    else if (/Windows/i.test(ua)) p = "windows";
+    document.documentElement.setAttribute("data-platform", p);
+  })();
+</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-win" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5.1 10.4 4v7.1H3V5.1Zm8.3-1.2L21 2.5v8.6h-9.7V3.9ZM3 12.9h7.4V20L3 18.9v-6Zm8.3 0H21v8.6l-9.7-1.4v-7.2Z"/></symbol>
+  <symbol id="i-android" viewBox="0 0 24 24"><path fill="currentColor" d="M17.6 9.5 19.3 6.6a.5.5 0 0 0-.9-.5l-1.7 3a10.6 10.6 0 0 0-9.4 0l-1.7-3a.5.5 0 1 0-.9.5l1.7 2.9A9.9 9.9 0 0 0 1.5 17h21a9.9 9.9 0 0 0-4.9-7.5ZM7 14.2a1 1 0 1 1 0-2.1 1 1 0 0 1 0 2.1Zm10 0a1 1 0 1 1 0-2.1 1 1 0 0 1 0 2.1Z"/></symbol>
+</svg>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="./" aria-label="StreamFlix">
+      <img src="assets/logo.png" alt="" width="32" height="32">
+      <span>Stream<b>Flix</b></span>
+    </a>
+    <a class="bar-btn" href="#download">הורדה</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>הסרטים שלכם.<br><span>בטלפון ובמחשב.</span></h1>
+        <p class="sub">ממשק בעברית, צפייה בלי אינטרנט, והמשך צפייה שעובר בין המכשירים.</p>
+
+        <div class="cta">
+          <a class="dl-btn" data-plat="windows" href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-windows-x64.msi">
+            <svg aria-hidden="true"><use href="#i-win"/></svg>
+            <span><b>הורדה ל-Windows</b><small><bdi dir="ltr">Windows 10/11</bdi><span class="live" data-size="streamflix-windows-x64.msi"></span></small></span>
+          </a>
+          <a class="dl-btn" data-plat="android" href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-arm64-v8a.apk">
+            <svg aria-hidden="true"><use href="#i-android"/></svg>
+            <span><b>הורדה לאנדרואיד</b><small><bdi dir="ltr">Android 9+</bdi><span class="live" data-size="streamflix-arm64-v8a.apk"></span></small></span>
+          </a>
+        </div>
+        <p class="meta">
+          <span class="live" data-version hidden></span>
+          <span class="only-android"><a href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-universal.apk">טלפון ישן? גרסה אוניברסלית</a></span>
+          <span class="only-ios">אין עדיין גרסה לאייפון.</span>
+        </p>
+      </div>
+
+      <div class="devices">
+        <div class="laptop">
+          <div class="laptop-screen">
+            <img data-shot="heroDesktop" src="assets/shots/desktop-home-1600.webp"
+                 srcset="assets/shots/desktop-home-960.webp 960w, assets/shots/desktop-home-1600.webp 1600w"
+                 sizes="(min-width: 1024px) 640px, 90vw" width="1600" height="900" fetchpriority="high" decoding="async"
+                 alt="StreamFlix במחשב: מסך הבית">
+          </div>
+          <div class="laptop-base" aria-hidden="true"></div>
+        </div>
+        <div class="phone">
+          <img data-shot="heroPhone" src="assets/shots/phone-series.webp" width="720" height="1497" decoding="async"
+               alt="StreamFlix בטלפון: לשונית הסדרות">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="shots wrap" aria-label="צילומי מסך" id="shots"></section>
+
+  <section class="download wrap" id="download" aria-labelledby="dl-title">
+    <h2 id="dl-title">הורדה</h2>
+    <div class="cards">
+      <article class="card" data-card="windows">
+        <div class="card-head">
+          <svg aria-hidden="true"><use href="#i-win"/></svg>
+          <div><h3>Windows</h3><p>64 ביט · <bdi dir="ltr">Windows 10/11</bdi></p></div>
+        </div>
+        <a class="dl-btn" data-plat="windows" href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-windows-x64.msi">
+          <span><b>הורדת קובץ ההתקנה</b><small><bdi dir="ltr">MSI</bdi><span class="live" data-size="streamflix-windows-x64.msi"></span></small></span>
+        </a>
+        <details>
+          <summary>עזרה בהתקנה</summary>
+          <ul>
+            <li>אם מופיע "Windows protected your PC": <b dir="ltr">More info</b> ← <b dir="ltr">Run anyway</b>.</li>
+            <li>בניגון הראשון חומת האש שואלת על גישה לרשת (הסרטים מגיעים מרשת שיתוף קבצים): <b dir="ltr">Allow</b>.</li>
+            <li>לא צריך הרשאות מנהל.</li>
+          </ul>
+        </details>
+      </article>
+
+      <article class="card" data-card="android">
+        <div class="card-head">
+          <svg aria-hidden="true"><use href="#i-android"/></svg>
+          <div><h3>Android</h3><p><bdi dir="ltr">Android 9</bdi> ומעלה</p></div>
+          <figure class="qr">
+            <img src="assets/qr-android.svg" width="76" height="76" alt="קוד QR להורדה לאנדרואיד">
+            <figcaption>סריקה מהטלפון</figcaption>
+          </figure>
+        </div>
+        <a class="dl-btn" data-plat="android" href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-arm64-v8a.apk">
+          <span><b>הורדת האפליקציה</b><small><bdi dir="ltr">APK</bdi><span class="live" data-size="streamflix-arm64-v8a.apk"></span></small></span>
+        </a>
+        <details>
+          <summary>עזרה בהתקנה</summary>
+          <ul>
+            <li>כשהטלפון מבקש: <b>הגדרות</b> ← <b>אפשר ממקור זה</b>, ואז <b>התקן</b>.</li>
+          </ul>
+        </details>
+        <details>
+          <summary>גרסאות נוספות</summary>
+          <ul class="variants">
+            <li><a href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-universal.apk">אוניברסלית, לכל טלפון</a><span class="live" data-size="streamflix-universal.apk"></span></li>
+            <li><a href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-armeabi-v7a.apk">טלפונים ישנים (32 ביט)</a><span class="live" data-size="streamflix-armeabi-v7a.apk"></span></li>
+            <li><a href="https://github.com/Haim098/streamflix-releases/releases/latest/download/streamflix-x86_64.apk">x86_64</a><span class="live" data-size="streamflix-x86_64.apk"></span></li>
+          </ul>
+          <dl class="hashes" dir="ltr" data-hashes hidden></dl>
+        </details>
+      </article>
+    </div>
+
+    <details class="news">
+      <summary>מה חדש<span class="live" data-news-ver hidden></span></summary>
+      <div class="news-body" id="news-body"></div>
+      <a class="news-link" href="https://github.com/Haim098/streamflix-releases/releases/latest" rel="noopener">כל השינויים ב-GitHub</a>
+    </details>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span>StreamFlix · לשימוש אישי. בלי פרסומות ובלי מעקב.</span>
+    <nav aria-label="קישורים">
+      <a href="../privacy/">פרטיות</a>
+      <a href="https://github.com/Haim098/streamflix-releases/releases" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="assets/shots.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

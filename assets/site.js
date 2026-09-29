@@ -30,24 +30,175 @@
       if (s.h) img.height = s.h;
       if (s.alt) img.alt = s.alt;
     });
-    var g = $("#gallery");
-    if (!g || !S.gallery) return;
-    S.gallery.forEach(function (s) {
-      var fig = el("figure", "shot " + (s.kind === "phone" ? "phone" : "desktop"));
-      fig.setAttribute("role", "listitem");
-      var b = el("button");
-      b.type = "button";
-      b.setAttribute("aria-label", "הגדלה: " + (s.caption || s.alt || ""));
+    buildShowcase(S.showcase);
+  }
+
+  /* ---------- Screenshots showcase ----------
+   * A stage cycling through the desktop shots (crossfade + slow Ken Burns zoom), a phone frame
+   * beside it cycling in sync, a caption, thumbnails with a progress bar, prev/next, pause/play.
+   * Only opacity and transform are animated. RTL: "next" is to the left (ArrowLeft, swipe right).
+   * prefers-reduced-motion: a static grid instead. */
+  function buildShowcase(cfg) {
+    var root = $("#showcase");
+    if (!root || !cfg || !cfg.desktop || !cfg.desktop.length) return;
+    var shots = cfg.desktop, phones = cfg.phone || [];
+    function file(s, w) { return "assets/shots/" + s.name + (w ? "-" + w : "") + ".webp"; }
+    function mkImg(s, sizes) {
       var img = el("img");
-      img.src = s.src; img.alt = s.alt || ""; img.loading = "lazy"; img.decoding = "async";
-      if (s.w) img.width = s.w;
-      if (s.h) img.height = s.h;
-      b.appendChild(img);
-      b.addEventListener("click", function () { openLightbox(s); });
-      fig.appendChild(b);
-      if (s.caption) fig.appendChild(el("figcaption", null, s.caption));
-      g.appendChild(fig);
+      img.src = file(s); img.srcset = file(s, 960) + " 960w, " + file(s) + " 1600w";
+      img.sizes = sizes; img.width = 1600; img.height = 900;
+      img.alt = s.alt || ""; img.loading = "lazy"; img.decoding = "async";
+      return img;
+    }
+    function caption(s) {
+      var p = el("p", "sc-cap");
+      p.appendChild(el("b", null, s.title));
+      p.appendChild(document.createTextNode(" "));
+      p.appendChild(el("span", null, s.text));
+      return p;
+    }
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      root.classList.add("sc-static");
+      shots.forEach(function (s) {
+        var f = el("figure", "sc-card");
+        f.appendChild(mkImg(s, "(min-width: 900px) 580px, calc(100vw - 40px)"));
+        var c = el("figcaption"); c.appendChild(caption(s)); f.appendChild(c);
+        root.appendChild(f);
+      });
+      return;
+    }
+
+    var main = el("div", "sc-main");
+    var stage = el("div", "sc-stage");
+    stage.tabIndex = 0;
+    stage.setAttribute("aria-label", "צילומי מסך מהמחשב. אפשר להחליף עם החיצים.");
+    var slides = shots.map(function (s, i) {
+      var d = el("div", "sc-slide");
+      d.setAttribute("role", "group");
+      d.setAttribute("aria-roledescription", "slide");
+      d.setAttribute("aria-label", (i + 1) + " מתוך " + shots.length + ": " + s.title);
+      d.setAttribute("aria-hidden", "true");
+      d.appendChild(mkImg(s, "(min-width: 1280px) 900px, (min-width: 900px) 72vw, calc(100vw - 40px)"));
+      d.addEventListener("click", function () { if (swiped) { swiped = false; return; } openLightbox({ src: file(s), alt: s.alt }); });
+      stage.appendChild(d);
+      return d;
     });
+    var prev = el("button", "sc-nav sc-prev"); prev.type = "button"; prev.setAttribute("aria-label", "הקודם");
+    var next = el("button", "sc-nav sc-next"); next.type = "button"; next.setAttribute("aria-label", "הבא");
+    stage.appendChild(prev); stage.appendChild(next);
+    main.appendChild(stage);
+
+    var phoneImgs = [];
+    if (phones.length) {
+      var ph = el("div", "sc-phone");
+      ph.setAttribute("aria-hidden", "true");
+      var scr = el("div", "sc-phone-screen");
+      phoneImgs = phones.map(function (p) {
+        var im = el("img"); im.src = p.src; im.alt = ""; im.width = 720; im.height = 1497; im.loading = "lazy"; im.decoding = "async";
+        scr.appendChild(im); return im;
+      });
+      ph.appendChild(scr); main.appendChild(ph);
+    }
+    root.appendChild(main);
+
+    var bar = el("div", "sc-bar");
+    var capBox = el("div", "sc-caption");
+    capBox.setAttribute("aria-live", "off");
+    var toggle = el("button", "sc-toggle"); toggle.type = "button";
+    bar.appendChild(capBox); bar.appendChild(toggle);
+    root.appendChild(bar);
+
+    var thumbs = el("div", "sc-thumbs");
+    var tbtns = shots.map(function (s, i) {
+      var b = el("button", "sc-thumb"); b.type = "button";
+      b.setAttribute("aria-label", s.title);
+      var im = el("img"); im.src = file(s, 320); im.alt = ""; im.width = 320; im.height = 180; im.loading = "lazy"; im.decoding = "async";
+      b.appendChild(im);
+      b.appendChild(el("span", "sc-prog"));
+      b.addEventListener("click", function () { go(i, true); });
+      thumbs.appendChild(b);
+      return b;
+    });
+    root.appendChild(thumbs);
+
+    var swiped = false, cur = -1, phoneCur = -1, userPaused = false, hover = false, focus = false, inView = false;
+    function freeze(img) {
+      // Keep the zoom where it is while the slide fades out (the animation goes away with the class).
+      var t = getComputedStyle(img).transform;
+      img.style.transform = t === "none" ? "" : t;
+      setTimeout(function () { if (!img.parentNode.classList.contains("is-active")) img.style.transform = ""; }, 1100);
+    }
+    function go(i, byUser) {
+      i = (i + shots.length) % shots.length;
+      if (i === cur) return;
+      if (cur >= 0) {
+        var old = slides[cur];
+        freeze($("img", old));
+        old.classList.remove("is-active", "kb-a", "kb-b");
+        old.setAttribute("aria-hidden", "true");
+        tbtns[cur].classList.remove("is-active");
+        tbtns[cur].removeAttribute("aria-current");
+      }
+      cur = i;
+      var s = slides[i];
+      $("img", s).style.transform = "";
+      void s.offsetWidth; // restart the Ken Burns animation
+      s.classList.add("is-active", i % 2 ? "kb-b" : "kb-a");
+      s.removeAttribute("aria-hidden");
+      var t = tbtns[i];
+      t.classList.add("is-active");
+      t.setAttribute("aria-current", "true");
+      var prog = $(".sc-prog", t);
+      prog.style.animation = "none"; void prog.offsetWidth; prog.style.animation = "";
+      capBox.textContent = ""; capBox.appendChild(caption(shots[i]));
+      if (phoneImgs.length) {
+        var pi = i % phoneImgs.length;
+        if (pi !== phoneCur) {
+          if (phoneCur >= 0) phoneImgs[phoneCur].classList.remove("is-active");
+          phoneImgs[pi].classList.add("is-active");
+          phoneCur = pi;
+        }
+      }
+      if (byUser) capBox.setAttribute("aria-live", "polite");
+    }
+    function sync() {
+      var paused = userPaused || hover || focus || !inView || document.hidden;
+      root.classList.toggle("is-paused", paused);
+      toggle.setAttribute("aria-label", userPaused ? "הפעלה" : "השהיה");
+      toggle.classList.toggle("is-play", userPaused);
+      capBox.setAttribute("aria-live", paused ? "polite" : "off");
+    }
+    tbtns.forEach(function (b) {
+      $(".sc-prog", b).addEventListener("animationend", function () { if (b.classList.contains("is-active")) go(cur + 1); });
+    });
+    next.addEventListener("click", function (e) { e.stopPropagation(); go(cur + 1, true); });
+    prev.addEventListener("click", function (e) { e.stopPropagation(); go(cur - 1, true); });
+    toggle.addEventListener("click", function () { userPaused = !userPaused; sync(); });
+    root.addEventListener("mouseenter", function () { hover = true; sync(); });
+    root.addEventListener("mouseleave", function () { hover = false; sync(); });
+    root.addEventListener("focusin", function () { focus = true; sync(); });
+    root.addEventListener("focusout", function (e) { if (!root.contains(e.relatedTarget)) { focus = false; sync(); } });
+    document.addEventListener("visibilitychange", sync);
+    root.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") { go(cur + 1, true); e.preventDefault(); }
+      else if (e.key === "ArrowRight") { go(cur - 1, true); e.preventDefault(); }
+    });
+    // Touch swipe (RTL: swiping right brings the next shot in from the left).
+    var sx = null, sy = null;
+    stage.addEventListener("pointerdown", function (e) { if (e.pointerType !== "mouse") { sx = e.clientX; sy = e.clientY; } });
+    stage.addEventListener("pointerup", function (e) {
+      if (sx === null) return;
+      var dx = e.clientX - sx, dy = e.clientY - sy; sx = sy = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { swiped = true; setTimeout(function () { swiped = false; }, 400); go(cur + (dx > 0 ? 1 : -1), true); }
+    });
+    stage.addEventListener("pointercancel", function () { sx = sy = null; });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (en) { inView = en[0].isIntersecting; sync(); }, { threshold: 0.35 }).observe(root);
+    } else { inView = true; }
+    go(0);
+    sync();
   }
 
   /* ---------- Lightbox ---------- */

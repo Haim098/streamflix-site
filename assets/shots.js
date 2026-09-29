@@ -16,38 +16,37 @@ window.SF_SHOTS = {
     alt: "לשונית הסדרות של StreamFlix בטלפון: שורות של פוסטרים לפי נושא",
   },
 
-  // Screenshot gallery. kind: "desktop" (16:9) or "phone" (portrait).
-  // Wide screens lay it out as a 6-column bento: keep the order desktop, phone, desktop, phone, desktop, desktop.
-  gallery: [
-    {
-      kind: "desktop", src: "assets/shots/desktop-foryou.webp", w: 1600, h: 900,
-      caption: "המלצות \"בשבילך\" במחשב",
-      alt: "כרטיס ההמלצה \"מומלץ בשבילך\" במחשב: תמונת רקע רחבה, הסבר למה הסרט הומלץ, כפתורי נגן, הרשימה שלי ולא בשבילי, ושורת עשרת הפופולריים",
-    },
-    {
-      kind: "phone", src: "assets/shots/phone-detail.webp", w: 720, h: 1497,
-      caption: "דף סרט בטלפון",
-      alt: "דף סרט בטלפון: תמונה, דירוג, כפתורי נגן והורדה, תקציר ושחקנים",
-    },
-    {
-      kind: "desktop", src: "assets/shots/desktop-series.webp", w: 1600, h: 900,
-      caption: "דף סדרה במחשב",
-      alt: "דף הסדרה \"דברים מוזרים\" במחשב: רקע אדום, דירוג, כפתור המשך פרק, בחירת איכות, תקציר ושורת שחקנים",
-    },
-    {
-      kind: "phone", src: "assets/shots/phone-genre.webp", w: 720, h: 1497,
-      caption: "ז'אנרים בטלפון",
-      alt: "מסך ז'אנר בטלפון עם שורות של סרטי אנימציה וגיבורי-על",
-    },
-    {
-      kind: "desktop", src: "assets/shots/desktop-episodes.webp", w: 1600, h: 900,
-      caption: "פרקים ועונות",
-      alt: "רשימת הפרקים של סדרה במחשב: בחירת עונה ושני טורים של פרקים עם תמונה, שם, אורך ותקציר",
-    },
-    {
-      kind: "desktop", src: "assets/shots/desktop-categories.webp", w: 1600, h: 900,
-      caption: "קטגוריות",
-      alt: "מסך הקטגוריות במחשב: אריחים של ז'אנרים עם תמונות רקע וכותרות בעברית",
-    },
-  ],
+  // Screenshots showcase: a stage that cycles through the desktop shots (in this order),
+  // with a phone frame beside it (wide screens) cycling through the phone shots.
+  // Each desktop shot: base name in assets/shots/ (files <name>-320/-960.webp + <name>.webp at 1600 px),
+  // a short title and one short line.
+  showcase: {
+    desktop: [
+      {
+        name: "desktop-home", title: "מסך הבית", text: "באנר גדול, והמשך צפייה מאיפה שעצרתם.",
+        alt: "מסך הבית של StreamFlix במחשב: באנר קולנועי של סרט ושורת המשך צפייה",
+      },
+      {
+        name: "desktop-foryou", title: "בשבילך", text: "המלצות שמסבירות למה הן כאן.",
+        alt: "כרטיס \"מומלץ בשבילך\" במחשב: תמונת רקע רחבה, הסבר להמלצה, כפתורי פעולה ושורת עשרת הפופולריים",
+      },
+      {
+        name: "desktop-series", title: "דף סדרה", text: "דירוג, שחקנים, והמשך לפרק הבא.",
+        alt: "דף הסדרה \"דברים מוזרים\" במחשב: רקע אדום, דירוג, כפתור המשך פרק ושורת שחקנים",
+      },
+      {
+        name: "desktop-episodes", title: "פרקים", text: "כל עונה וכל פרק, במבט אחד.",
+        alt: "רשימת הפרקים של סדרה במחשב: בחירת עונה ושני טורים של פרקים עם תמונה, אורך ותקציר",
+      },
+      {
+        name: "desktop-categories", title: "קטגוריות", text: "כל הז'אנרים, בלחיצה אחת.",
+        alt: "מסך הקטגוריות במחשב: אריחי ז'אנרים עם תמונות רקע וכותרות בעברית",
+      },
+    ],
+    phone: [
+      { src: "assets/shots/phone-series.webp", alt: "לשונית הסדרות בטלפון: שורות של פוסטרים" },
+      { src: "assets/shots/phone-detail.webp", alt: "דף סרט בטלפון: דירוג, כפתורי נגן והורדה, תקציר ושחקנים" },
+      { src: "assets/shots/phone-genre.webp", alt: "מסך ז'אנר בטלפון עם שורות של סרטים" },
+    ],
+  },
 };

@@ -7,7 +7,6 @@
   var CACHE_KEY = "sf-release-v1";
   var FRESH_MS = 30 * 60 * 1000;          // reuse a fetched release for 30 min (API limit: 60/h per IP)
   var STALE_MS = 3 * 24 * 60 * 60 * 1000; // if GitHub is unreachable, accept a cache up to 3 days old
-  var MSI = "streamflix-windows-x64.msi", APK = "streamflix-arm64-v8a.apk";
   var platform = document.documentElement.getAttribute("data-platform") || "other";
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -17,15 +16,35 @@
 
   /* ---------- Screenshots (assets/shots.js) ---------- */
   var S = window.SF_SHOTS || {};
-  $all("img[data-shot]").forEach(function (img) {
-    var s = S[img.getAttribute("data-shot")];
-    if (!s) return;
+  function setImg(img, s) {
     if (s.srcset) img.srcset = s.srcset; else img.removeAttribute("srcset");
     img.src = s.src;
     if (s.w) img.width = s.w;
     if (s.h) img.height = s.h;
-    if (s.alt) img.alt = s.alt;
+    img.alt = s.alt || "";
+  }
+  $all("img[data-shot]").forEach(function (img) {
+    var s = S[img.getAttribute("data-shot")];
+    if (s) setImg(img, s);
   });
+  var box = $("#shots");
+  if (box && Array.isArray(S.gallery)) {
+    S.gallery.forEach(function (s, i) {
+      var fig = el("figure"); fig.className = "shot";
+      var img = el("img");
+      img.loading = "lazy"; img.decoding = "async";
+      img.sizes = i === 0 ? "(min-width: 1280px) 1200px, calc(100vw - 40px)" : "(min-width: 900px) 50vw, calc(100vw - 40px)";
+      setImg(img, s);
+      fig.appendChild(img);
+      if (s.title || s.text) {
+        var cap = el("figcaption");
+        if (s.title) cap.appendChild(el("b", s.title));
+        if (s.text) cap.appendChild(document.createTextNode(s.text));
+        fig.appendChild(cap);
+      }
+      box.appendChild(fig);
+    });
+  }
 
   /* ---------- Live release data ---------- */
   function fmtSize(bytes) {
@@ -73,22 +92,12 @@
       if (a && a.size) { n.textContent = ""; n.appendChild(ltr(fmtSize(a.size))); }
     });
 
-    // Hero meta line: "גרסה 0.12.0 · 110 MB" (size of the visitor's primary file; both sizes elsewhere).
+    // Hero meta line: "גרסה 0.12.0".
     var v = $("[data-version]");
     if (v) {
       v.textContent = "גרסה ";
       v.appendChild(ltr(ver));
-      var parts = [];
-      if (platform === "windows" && by[MSI]) parts.push(["", by[MSI].size]);
-      else if (platform === "android" && by[APK]) parts.push(["", by[APK].size]);
-      else {
-        if (by[MSI]) parts.push(["Windows ", by[MSI].size]);
-        if (by[APK]) parts.push(["Android ", by[APK].size]);
-      }
-      parts.forEach(function (p) {
-        v.appendChild(document.createTextNode(" · " + p[0]));
-        v.appendChild(ltr(fmtSize(p[1])));
-      });
+      // Sizes are already on the buttons; the meta line only carries the version.
       v.hidden = false;
     }
 

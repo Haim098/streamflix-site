@@ -3,8 +3,11 @@
   "use strict";
 
   var REPO = "Haim098/streamflix-releases";
-  var API = "https://api.github.com/repos/" + REPO + "/releases/latest";
-  var CACHE_KEY = "sf-release-v1";
+  // The list, not /releases/latest: a release can be for one platform only (the app's
+  // tools/release.sh --skip-desktop / --skip-android), so each platform's download is taken from
+  // the newest release that carries its installer. One API call, like /latest.
+  var API = "https://api.github.com/repos/" + REPO + "/releases?per_page=30";
+  var CACHE_KEY = "sf-release-v2";
   var STALE_MS = 3 * 24 * 60 * 60 * 1000; // if GitHub is unreachable, accept a cache up to 3 days old
   var platform = document.documentElement.getAttribute("data-platform") || "other";
 
@@ -263,8 +266,7 @@
   }
 
   // Keep only the fields the page uses (also what goes into the cache).
-  function slim(j) {
-    if (!j || typeof j.tag_name !== "string" || !Array.isArray(j.assets)) throw new Error("bad release");
+  function slimOne(j) {
     return {
       tag: j.tag_name,
       url: typeof j.html_url === "string" && j.html_url.indexOf("https://github.com/") === 0 ? j.html_url : null,
@@ -274,6 +276,22 @@
         return { name: String(a.name || ""), size: Number(a.size) || 0, digest: typeof a.digest === "string" ? a.digest : "" };
       }),
     };
+  }
+
+  // The newest published release overall (what's new) and per platform (its downloads).
+  function slim(list) {
+    if (!Array.isArray(list)) throw new Error("bad releases");
+    var rels = list.filter(function (j) {
+      return j && !j.draft && !j.prerelease && typeof j.tag_name === "string" && Array.isArray(j.assets);
+    }).map(slimOne).sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    function newestWith(re) {
+      for (var i = 0; i < rels.length; i++) {
+        if (rels[i].assets.some(function (a) { return re.test(a.name); })) return rels[i];
+      }
+      return null;
+    }
+    if (!rels.length) throw new Error("no release");
+    return { newest: rels[0], android: newestWith(/\.apk$/i), windows: newestWith(/\.msi$/i) };
   }
 
   function loadRelease() {
@@ -290,45 +308,70 @@
     });
   }
 
-  function applyRelease(rel) {
-    var ver = rel.tag.replace(/^v/i, "");
+  function ver(rel) { return rel ? rel.tag.replace(/^v/i, "") : ""; }
+
+  // "0.13.2", or per platform once they differ ("Windows 0.13.1 · אנדרואיד 0.13.2"), this
+  // device's platform first.
+  function versionLabel(info) {
+    var w = ver(info.windows), a = ver(info.android);
+    if (!w || !a || w === a) return w || a;
+    var win = "Windows " + w, and = "אנדרואיד " + a;
+    return platform === "windows" ? win + " · " + and : and + " · " + win;
+  }
+
+  function applyRelease(info) {
+    var rel = info.newest;
+    // Each installer from its platform's newest release.
     var byName = {};
-    rel.assets.forEach(function (a) { byName[a.name] = a; });
+    [[info.android, /\.apk$/i], [info.windows, /\.msi$/i]].forEach(function (p) {
+      if (!p[0]) return;
+      p[0].assets.forEach(function (a) { if (p[1].test(a.name)) byName[a.name] = { asset: a, tag: p[0].tag }; });
+    });
+
+    // The static links are /releases/latest/download/<name>, which 404s for a platform the latest
+    // release skipped: point each at the release that has it.
+    $all('a[href*="/releases/latest/download/"]').forEach(function (link) {
+      var name = link.getAttribute("href").split("/").pop();
+      var hit = byName[name];
+      if (!hit) return;
+      link.href = "https://github.com/" + REPO + "/releases/download/" + encodeURIComponent(hit.tag) + "/" + encodeURIComponent(name);
+    });
 
     $all("[data-size]").forEach(function (n) {
-      var a = byName[n.getAttribute("data-size")];
-      if (!a || !a.size) return;
+      var hit = byName[n.getAttribute("data-size")];
+      if (!hit || !hit.asset.size) return;
       // " · " stays in the RTL flow; the number+unit is isolated so it never renders as "MB 27.2".
       n.textContent = " · ";
-      var bdi = el("bdi", null, fmtSize(a.size));
+      var bdi = el("bdi", null, fmtSize(hit.asset.size));
       bdi.setAttribute("dir", "ltr");
       n.appendChild(bdi);
     });
 
+    var label = versionLabel(info);
     var vl = $("[data-version-line]");
-    if (vl) {
+    if (vl && label) {
       vl.textContent = "";
       vl.appendChild(el("span", "dot"));
-      var t = "גרסה " + ver;
+      var t = "גרסה " + label;
       var d = fmtDate(rel.date);
       if (d) t += " · עודכנה ב-" + d;
       vl.appendChild(document.createTextNode(t));
       vl.hidden = false;
     }
     var nv = $("[data-news-ver]");
-    if (nv) { nv.textContent = ver; nv.hidden = false; }
+    if (nv) { nv.textContent = ver(rel); nv.hidden = false; }
     var fv = $("[data-footer-ver]");
-    if (fv) { fv.textContent = "גרסה נוכחית: " + ver + "."; fv.hidden = false; }
+    if (fv && label) { fv.textContent = "גרסה נוכחית: " + label + "."; fv.hidden = false; }
 
-    // SHA-256 list (the API gives "sha256:<hex>").
+    // SHA-256 list (the API gives "sha256:<hex>"), for the files the buttons download.
     var hashes = $("[data-hashes]");
     if (hashes) {
       var dl = $("dl", hashes);
       var any = false;
-      rel.assets.forEach(function (a) {
-        var m = /^sha256:([0-9a-f]{64})$/i.exec(a.digest);
-        if (!m || !/\.(apk|msi)$/i.test(a.name)) return;
-        dl.appendChild(el("dt", null, a.name));
+      Object.keys(byName).forEach(function (name) {
+        var m = /^sha256:([0-9a-f]{64})$/i.exec(byName[name].asset.digest);
+        if (!m) return;
+        dl.appendChild(el("dt", null, name));
         dl.appendChild(el("dd", null, m[1]));
         any = true;
       });
@@ -426,8 +469,8 @@
 
   if (typeof fetch === "function") {
     loadRelease().then(applyRelease).catch(function () {
-      // Offline or rate-limited: the download links are stable "latest" URLs and keep working;
-      // version, sizes and notes simply stay hidden.
+      // Offline or rate-limited: the download links stay the static "latest" URLs (right unless
+      // the latest release skipped a platform); version, sizes and notes simply stay hidden.
       document.documentElement.classList.add("no-release");
     });
   }

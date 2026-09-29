@@ -5,7 +5,6 @@
   var REPO = "Haim098/streamflix-releases";
   var API = "https://api.github.com/repos/" + REPO + "/releases/latest";
   var CACHE_KEY = "sf-release-v1";
-  var FRESH_MS = 30 * 60 * 1000;          // reuse a fetched release for 30 min (API limit: 60/h per IP)
   var STALE_MS = 3 * 24 * 60 * 60 * 1000; // if GitHub is unreachable, accept a cache up to 3 days old
   var platform = document.documentElement.getAttribute("data-platform") || "other";
 
@@ -278,9 +277,10 @@
   }
 
   function loadRelease() {
+    // Always ask GitHub first, so a new release shows up on the next visit; the stored copy is
+    // only a fallback for when GitHub can't be reached (offline, rate limit).
     var c = readCache();
-    if (c && c.rel && Date.now() - c.t < FRESH_MS) return Promise.resolve(c.rel);
-    return fetchJson(API, 5000).then(function (j) {
+    return fetchJson(API, 4000).then(function (j) {
       var rel = slim(j);
       writeCache(rel);
       return rel;
